@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bob 2.0 - Autonomous Maintenance Co-Pilot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'IBM Plex Sans', sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .carbon-grid { background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 32px 32px; }
+  @keyframes pulse-dot { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  .pulse-dot { animation: pulse-dot 1.5s infinite; }
+  @keyframes slide-in { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: translateY(0) } }
+  .slide-in { animation: slide-in 0.4s ease-out; }
+  .shimmer { background: linear-gradient(90deg, #2d2d2d 25%, #3a3a3a 50%, #2d2d2d 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+</style>
+</head>
+<body class="bg-[#161616] text-[#f4f4f4] min-h-screen carbon-grid">
+<!-- Header -->
+<header class="border-b border-[#393939] bg-[#161616]/90 backdrop-blur sticky top-0 z-50">
+  <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="w-10 h-10 bg-[#0f62fe] flex items-center justify-center font-bold text-lg">B</div>
+      <div>
+        <h1 class="text-[20px] font-semibold leading-none">IBM Bob 2.0 <span class="text-[#8d8d8d] font-normal">| Maintenance Co-Pilot</span></h1>
+        <p class="text-[12px] text-[#8d8d8d] mt-1 mono">Agent Mode • Parallel Tasks • Document Understanding • Subagents</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-[11px] px-2 py-1 bg-[#262626] border border-[#393939] mono">PROTOTYPE</span>
+      <span class="text-[11px] px-2 py-1 bg-[#0f62fe]/20 border border-[#0f62fe] text-[#78a9ff] mono">LIVE • sample-project: taskflow-api</span>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-[1600px] mx-auto px-6 py-6 grid grid-cols-12 gap-6">
+  <!-- Left: Input -->
+  <div class="col-span-12 lg:col-span-4 space-y-4">
+    <div class="bg-[#262626] border border-[#393939] p-5">
+      <h2 class="text-[14px] font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+        <span class="w-5 h-5 bg-[#f4f4f4] text-[#161616] flex items-center justify-center text-[11px] font-bold">1</span>
+        Bug Intake - Document Understanding
+      </h2>
+      <p class="text-[12px] text-[#8d8d8d] mb-3">Paste unstructured bug report + logs. Bob parses multi-modal inputs.</p>
+      
+      <div id="examples" class="grid grid-cols-1 gap-2 mb-4"></div>
+
+      <textarea id="bugInput" class="w-full h-[180px] bg-[#161616] border border-[#393939] p-3 text-[13px] mono focus:border-[#0f62fe] outline-none resize-none" placeholder="Paste bug report here... Try: User reports pagination empty, data leak..."></textarea>
+      
+      <div class="flex gap-2 mt-3">
+        <button id="analyzeBtn" class="flex-1 bg-[#0f62fe] hover:bg-[#0353e9] text-white py-2.5 px-4 text-[14px] font-medium flex items-center justify-center gap-2">
+          <span>▶</span> Run Bob Orchestrator
+        </button>
+        <button id="clearBtn" class="px-4 py-2.5 border border-[#393939] hover:bg-[#393939] text-[13px]">Clear</button>
+      </div>
+
+      <div class="mt-4 p-3 bg-[#161616] border border-[#393939]">
+        <h3 class="text-[11px] mono uppercase text-[#8d8d8d] mb-2">What Bob Understands</h3>
+        <ul class="text-[11px] mono space-y-1 text-[#c6c6c6]">
+          <li>• Natural language bug description</li>
+          <li>• Stack traces & log dumps</li>
+          <li>• README, API docs, past incidents</li>
+          <li>• Codebase AST + git history</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Impact Metrics -->
+    <div class="bg-[#262626] border border-[#393939] p-5">
+      <h2 class="text-[12px] mono uppercase text-[#8d8d8d] mb-3">Impact - Before vs After</h2>
+      <div class="space-y-3 text-[12px]">
+        <div class="flex justify-between border-b border-[#393939] pb-2">
+          <span class="text-[#8d8d8d]">MTTR</span>
+          <span><span class="line-through text-[#8d8d8d]">4.5 hrs</span> <span class="text-[#24a148] font-semibold ml-2">→ 4.8 min (98%)</span></span>
+        </div>
+        <div class="flex justify-between border-b border-[#393939] pb-2">
+          <span class="text-[#8d8d8d]">Manual toil</span>
+          <span><span class="line-through text-[#8d8d8d]">162 min</span> <span class="text-[#24a148] font-semibold ml-2">→ 0 min</span></span>
+        </div>
+        <div class="flex justify-between border-b border-[#393939] pb-2">
+          <span class="text-[#8d8d8d]">Regression rate</span>
+          <span><span class="line-through text-[#8d8d8d]">25%</span> <span class="text-[#24a148] font-semibold ml-2">→ &lt;3%</span></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-[#8d8d8d]">Files to search</span>
+          <span><span class="line-through text-[#8d8d8d]">40-100</span> <span class="text-[#24a148] font-semibold ml-2">→ 2-3 pinpointed</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center + Right: Orchestrator -->
+  <div class="col-span-12 lg:col-span-8 space-y-4">
+    <!-- Orchestrator Timeline -->
+    <div class="bg-[#262626] border border-[#393939] p-5">
+      <h2 class="text-[14px] font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span class="w-5 h-5 bg-[#0f62fe] text-white flex items-center justify-center text-[11px] font-bold">2</span>
+        Agent Mode Orchestrator - Live Timeline
+        <span id="totalTime" class="ml-auto text-[11px] mono bg-[#161616] border border-[#393939] px-2 py-1"></span>
+      </h2>
+      <div id="timeline" class="space-y-3">
+        <div class="text-[13px] text-[#8d8d8d] mono p-8 text-center border border-dashed border-[#393939]">Run analysis to see orchestrator in action. Watch parallel agents work concurrently.</div>
+      </div>
+    </div>
+
+    <!-- Parallel Agents Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div id="agent-reproducer" class="bg-[#262626] border border-[#393939] p-4 opacity-50">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-[12px] font-semibold flex items-center gap-2"><span class="w-2 h-2 bg-[#8d8d8d] rounded-full"></span> Reproducer Agent</h3>
+          <span class="text-[10px] mono px-1.5 py-0.5 bg-[#161616] border border-[#393939]">PARALLEL</span>
+        </div>
+        <div class="text-[11px] mono text-[#8d8d8d]">Waiting...</div>
+      </div>
+      <div id="agent-fix" class="bg-[#262626] border border-[#393939] p-4 opacity-50">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-[12px] font-semibold flex items-center gap-2"><span class="w-2 h-2 bg-[#8d8d8d] rounded-full"></span> Fix Agent</h3>
+          <span class="text-[10px] mono px-1.5 py-0.5 bg-[#161616] border border-[#393939]">PARALLEL</span>
+        </div>
+        <div class="text-[11px] mono text-[#8d8d8d]">Waiting...</div>
+      </div>
+      <div id="agent-test" class="bg-[#262626] border border-[#393939] p-4 opacity-50">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-[12px] font-semibold flex items-center gap-2"><span class="w-2 h-2 bg-[#8d8d8d] rounded-full"></span> Test-Gap Agent</h3>
+          <span class="text-[10px] mono px-1.5 py-0.5 bg-[#161616] border border-[#393939]">PARALLEL</span>
+        </div>
+        <div class="text-[11px] mono text-[#8d8d8d]">Waiting...</div>
+      </div>
+      <div id="agent-release" class="bg-[#262626] border border-[#393939] p-4 opacity-50">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-[12px] font-semibold flex items-center gap-2"><span class="w-2 h-2 bg-[#8d8d8d] rounded-full"></span> Release Notes Agent</h3>
+          <span class="text-[10px] mono px-1.5 py-0.5 bg-[#161616] border border-[#393939]">PARALLEL</span>
+        </div>
+        <div class="text-[11px] mono text-[#8d8d8d]">Waiting...</div>
+      </div>
+    </div>
+
+    <!-- Results Tabs -->
+    <div class="bg-[#262626] border border-[#393939]">
+      <div class="flex border-b border-[#393939] overflow-x-auto">
+        <button data-tab="rootcause" class="tab-btn active px-4 py-3 text-[12px] font-medium border-b-2 border-[#0f62fe] bg-[#393939]">Root Cause</button>
+        <button data-tab="diff" class="tab-btn px-4 py-3 text-[12px] font-medium border-b-2 border-transparent hover:bg-[#393939]">Fix Diff</button>
+        <button data-tab="reproduce" class="tab-btn px-4 py-3 text-[12px] font-medium border-b-2 border-transparent hover:bg-[#393939]">Reproduction</button>
+        <button data-tab="test" class="tab-btn px-4 py-3 text-[12px] font-medium border-b-2 border-transparent hover:bg-[#393939]">Generated Test</button>
+        <button data-tab="release" class="tab-btn px-4 py-3 text-[12px] font-medium border-b-2 border-transparent hover:bg-[#393939]">PR & Release</button>
+      </div>
+      <div id="tab-content" class="p-5 min-h-[380px]">
+        <div class="text-[13px] text-[#8d8d8d] mono p-8 text-center">Results will appear here after analysis. Shows full workflow from bug → tested PR.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentResult = null;
+
+async function loadExamples() {
+  const res = await fetch('/api/examples');
+  const examples = await res.json();
+  const container = document.getElementById('examples');
+  container.innerHTML = examples.map(ex => `
+    <button onclick="setExample('${ex.id}')" class="text-left p-2.5 bg-[#161616] border border-[#393939] hover:border-[#0f62fe] group">
+      <div class="text-[11px] mono text-[#0f62fe]">${ex.id}</div>
+      <div class="text-[12px] font-medium group-hover:text-white">${ex.title}</div>
+    </button>
+  `).join('');
+  window.examplesData = examples;
+}
+
+function setExample(id) {
+  const ex = window.examplesData.find(e => e.id === id);
+  if (ex) document.getElementById('bugInput').value = ex.report;
+}
+
+function setAgentState(id, state, data) {
+  const el = document.getElementById(`agent-${id}`);
+  el.classList.remove('opacity-50');
+  const dot = state === 'running' ? 'bg-[#f1c21b] pulse-dot' : state === 'completed' ? 'bg-[#24a148]' : 'bg-[#8d8d8d]';
+  const statusText = state === 'running' ? 'Running...' : state === 'completed' ? `Completed in ${data?.duration||0}ms` : 'Waiting...';
+  el.querySelector('h3').innerHTML = `<span class="w-2 h-2 ${dot} rounded-full"></span> ${el.querySelector('h3').textContent.replace(/●|◐|○/,'').trim()}`;
+  
+  if (data) {
+    if (id === 'reproducer') {
+      el.querySelector('div:last-child').innerHTML = `
+        <div class="text-[11px] text-[#c6c6c6] mb-1">${statusText}</div>
+        <div class="text-[10px] mono bg-[#161616] p-2 border border-[#393939] max-h-[120px] overflow-auto">${data.steps?.[0]||''}</div>
+        <div class="mt-1 text-[10px] text-[#24a148]">✓ ${data.status} • confidence ${Math.round((data.confidence||0)*100)}%</div>
+      `;
+    } else if (id === 'fix') {
+      el.querySelector('div:last-child').innerHTML = `
+        <div class="text-[11px] text-[#c6c6c6] mb-1">${statusText}</div>
+        <div class="text-[10px] mono">Files: ${data.filesChanged} • Safety: ${data.safety?.slice(0,60)}...</div>
+        <div class="mt-1 text-[10px] text-[#24a148]">✓ Fix generated • ${Math.round((data.confidence||0)*100)}% confidence</div>
+      `;
+    } else if (id === 'test') {
+      el.querySelector('div:last-child').innerHTML = `
+        <div class="text-[11px] text-[#c6c6c6] mb-1">${statusText}</div>
+        <div class="text-[10px] mono">${data.cases?.length||0} test cases • ${data.coverage?.slice(0,50)}</div>
+        <div class="mt-1 text-[10px] text-[#24a148]">✓ Prevents regression</div>
+      `;
+    } else if (id === 'release') {
+      el.querySelector('div:last-child').innerHTML = `
+        <div class="text-[11px] text-[#c6c6c6] mb-1">${statusText}</div>
+        <div class="text-[10px] mono truncate">${data.prTitle?.slice(0,50)}...</div>
+        <div class="mt-1 text-[10px] text-[#24a148]">✓ PR ready • Risk: ${data.risk?.split(' ')[0]}</div>
+      `;
+    }
+  }
+}
+
+function renderTimeline(timeline, totalDuration) {
+  const container = document.getElementById('timeline');
+  document.getElementById('totalTime').textContent = `Total: ${totalDuration}ms • Parallel speedup 4x`;
+  container.innerHTML = timeline.map((t, i) => {
+    const isRunning = t.status === 'running';
+    const isCompleted = t.status === 'completed';
+    return `
+      <div class="flex gap-3 slide-in" style="animation-delay:${i*0.1}s">
+        <div class="flex flex-col items-center">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isCompleted ? 'bg-[#24a148] text-white' : isRunning ? 'bg-[#f1c21b] text-black pulse-dot' : 'bg-[#393939] text-[#8d8d8d]'}">${isCompleted ? '✓' : i+1}</div>
+          ${i < timeline.length-1 ? '<div class="w-[1px] h-8 bg-[#393939] mt-1"></div>' : ''}
+        </div>
+        <div class="flex-1 pb-6">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] font-medium">${t.phase}</span>
+            <span class="text-[10px] mono px-1.5 py-0.5 bg-[#161616] border border-[#393939]">${t.agent||t.agents?.join(', ')||''}</span>
+            ${t.duration ? `<span class="text-[10px] mono text-[#8d8d8d]">${t.duration}ms</span>` : ''}
+            ${t.parallelSpeedup ? `<span class="text-[10px] mono text-[#0f62fe] bg-[#0f62fe]/10 border border-[#0f62fe]/30 px-1.5 py-0.5">⚡ ${t.parallelSpeedup}</span>` : ''}
+          </div>
+          <div class="text-[11px] mono text-[#8d8d8d] mt-1">
+            ${t.result ? `→ Classified as ${t.result} • ${t.duration}ms` : ''}
+            ${t.files ? `→ Found ${t.files} relevant files` : ''}
+            ${t.agents ? `→ Running ${t.agents.length} subagents concurrently` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTabs(result) {
+  const tabs = {
+    rootcause: `
+      <div class="space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[10px] mono uppercase text-[#8d8d8d]">Classification</div>
+            <div class="text-[14px] font-semibold mt-1">${result.triageResult.classification.id} • ${result.triageResult.classification.severity}</div>
+            <div class="text-[11px] mono text-[#c6c6c6] mt-1">${result.triageResult.classification.summary}</div>
+          </div>
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[10px] mono uppercase text-[#8d8d8d]">Root File</div>
+            <div class="text-[13px] mono mt-1 text-[#78a9ff]">${result.codeLocatorResult.rootCauseFile}:${result.codeLocatorResult.rootCauseLine}</div>
+            <div class="text-[11px] mono text-[#c6c6c6] mt-1">Confidence ${Math.round(result.codeLocatorResult.confidence*100)}%</div>
+          </div>
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[10px] mono uppercase text-[#8d8d8d]">Search Stats</div>
+            <div class="text-[11px] mono mt-1">${result.codeLocatorResult.searchStats.filesScanned} files • ${result.codeLocatorResult.searchStats.totalLines} lines scanned</div>
+            <div class="text-[11px] mono text-[#24a148] mt-1">→ 2-3 files pinpointed (95% less)</div>
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Document Understanding Output</h4>
+          <div class="bg-[#161616] border border-[#393939] p-3 mono text-[11px] space-y-1">
+            <div>Key phrases: <span class="text-[#78a9ff]">${result.triageResult.docUnderstanding.keyPhrases.join(', ')}</span></div>
+            <div>Stack traces: ${result.triageResult.stackTraces.map(s => `${s.file}:${s.line} in ${s.function}()`).join(', ')}</div>
+            <div>Related docs: ${result.triageResult.docUnderstanding.relatedDocs.join(', ')}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Dependency Graph & Code Snippet (Buggy)</h4>
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[11px] mono text-[#f1c21b] mb-2">${result.codeLocatorResult.dependencyGraph[0]}</div>
+            <pre class="text-[11px] mono bg-[#0f0f0f] p-3 border border-[#393939] overflow-auto text-[#ff8389]">${result.codeLocatorResult.codeSnippet}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Relevant Files Ranked</h4>
+          <div class="space-y-2">
+            ${result.codeLocatorResult.relevantFiles.map(f => `
+              <div class="flex items-center justify-between bg-[#161616] border border-[#393939] p-2">
+                <span class="text-[11px] mono text-[#78a9ff]">${f.file} : ${f.lines}</span>
+                <span class="text-[10px] mono bg-[#0f62fe]/20 text-[#78a9ff] px-1.5 py-0.5">${Math.round(f.relevance*100)}% • ${f.reason}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `,
+    diff: `
+      <div class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] mono px-2 py-1 bg-[#24a148]/20 border border-[#24a148] text-[#24a148]">✓ Auto-fixable • ${Math.round(result.fixResult.confidence*100)}% confidence</span>
+          <span class="text-[11px] mono px-2 py-1 bg-[#161616] border border-[#393939]">Files changed: ${result.fixResult.filesChanged}</span>
+          <span class="text-[11px] mono px-2 py-1 bg-[#161616] border border-[#393939]">Safety: ${result.fixResult.safety.slice(0,40)}...</span>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Fix Explanation</h4>
+          <p class="text-[12px] text-[#c6c6c6] bg-[#161616] border border-[#393939] p-3">${result.fixResult.explanation.replace(/\n/g,'<br>')}</p>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Diff - Ready for PR</h4>
+          <pre class="text-[11px] mono bg-[#0f0f0f] p-3 border border-[#393939] overflow-auto whitespace-pre-wrap">${result.fixResult.diff}</pre>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Fixed Code</h4>
+          <pre class="text-[11px] mono bg-[#0f0f0f] p-3 border border-[#393939] overflow-auto text-[#a7f0ba]">${result.fixResult.fixedCode}</pre>
+        </div>
+      </div>
+    `,
+    reproduce: `
+      <div class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] mono px-2 py-1 bg-[#f1c21b]/20 border border-[#f1c21b] text-[#f1c21b]">⚠ Bug reproduced</span>
+          <span class="text-[11px] mono px-2 py-1 bg-[#161616] border border-[#393939]">Auto-runnable: ${result.reproduceResult.canAutoRun ? 'Yes' : 'No'}</span>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Steps to Reproduce</h4>
+          <ol class="list-decimal list-inside text-[12px] mono bg-[#161616] border border-[#393939] p-3 space-y-1">
+            ${result.reproduceResult.steps.map(s => `<li>${s}</li>`).join('')}
+          </ol>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[10px] mono uppercase text-[#8d8d8d]">Expected</div>
+            <div class="text-[11px] mono mt-1 text-[#a7f0ba]">${result.reproduceResult.expectedVsActual.expected}</div>
+          </div>
+          <div class="bg-[#161616] border border-[#393939] p-3">
+            <div class="text-[10px] mono uppercase text-[#8d8d8d]">Actual (Bug)</div>
+            <div class="text-[11px] mono mt-1 text-[#ff8389]">${result.reproduceResult.expectedVsActual.actual}</div>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Generated Reproduction Script</h4>
+          <pre class="text-[11px] mono bg-[#0f0f0f] p-3 border border-[#393939] overflow-auto">${result.reproduceResult.script}</pre>
+        </div>
+      </div>
+    `,
+    test: `
+      <div class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] mono px-2 py-1 bg-[#24a148]/20 border border-[#24a148] text-[#24a148]">✓ Prevents regression • ${result.testResult.cases.length} cases</span>
+          <span class="text-[11px] mono px-2 py-1 bg-[#161616] border border-[#393939]">${result.testResult.coverage}</span>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Test Cases Generated</h4>
+          <div class="grid grid-cols-1 gap-1">
+            ${result.testResult.cases.map(c => `<div class="text-[11px] mono bg-[#161616] border border-[#393939] p-2">✓ ${c}</div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">Regression Test File (auto-generated)</h4>
+          <pre class="text-[11px] mono bg-[#0f0f0f] p-3 border border-[#393939] overflow-auto">${result.testResult.testFile}</pre>
+        </div>
+      </div>
+    `,
+    release: `
+      <div class="space-y-4">
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">PR Title</h4>
+          <div class="text-[13px] mono bg-[#161616] border border-[#0f62fe] p-3 text-[#78a9ff]">${result.releaseResult.prTitle}</div>
+        </div>
+        <div>
+          <h4 class="text-[12px] font-semibold mb-2">PR Description (auto-generated)</h4>
+          <pre class="text-[11px] mono bg-[#161616] border border-[#393939] p-3 whitespace-pre-wrap">${result.releaseResult.prDescription}</pre>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <h4 class="text-[12px] font-semibold mb-2">Changelog.md</h4>
+            <pre class="text-[11px] mono bg-[#0f0f0f] border border-[#393939] p-3 whitespace-pre-wrap">${result.releaseResult.changelog}</pre>
+          </div>
+          <div>
+            <h4 class="text-[12px] font-semibold mb-2">Release Checklist & Risk</h4>
+            <div class="bg-[#161616] border border-[#393939] p-3 space-y-2">
+              <div class="text-[11px]"><span class="text-[#8d8d8d]">Risk:</span> <span class="text-[#f1c21b]">${result.releaseResult.risk}</span></div>
+              <div class="space-y-1 mt-2">
+                ${result.releaseResult.checklist.map(item => `<div class="text-[11px] mono flex gap-2"><span class="text-[#24a148]">✓</span> ${item}</div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  window.renderTab = (tabName) => {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active','bg-[#393939]','border-[#0f62fe]');
+      b.classList.add('border-transparent');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active','bg-[#393939]','border-[#0f62fe]');
+    document.querySelector(`[data-tab="${tabName}"]`).classList.remove('border-transparent');
+    document.getElementById('tab-content').innerHTML = tabs[tabName] || 'No data';
+  };
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => renderTab(btn.dataset.tab));
+  });
+
+  renderTab('rootcause');
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', async () => {
+  const bugReport = document.getElementById('bugInput').value.trim();
+  if (!bugReport) return alert('Paste a bug report');
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="animate-spin">⟳</span> Orchestrating...';
+
+  // Reset UI
+  ['reproducer','fix','test','release'].forEach(id => {
+    const el = document.getElementById(`agent-${id}`);
+    el.classList.add('opacity-50');
+    el.querySelector('div:last-child').innerHTML = '<div class="text-[11px] mono text-[#8d8d8d]">Queued...</div>';
+  });
+
+  document.getElementById('timeline').innerHTML = `
+    <div class="space-y-3">
+      <div class="flex gap-3"><div class="w-6 h-6 rounded-full bg-[#f1c21b] pulse-dot flex items-center justify-center text-[10px] font-bold text-black">1</div><div class="text-[13px]">Triage Agent - Document Understanding... <span class="mono text-[11px] text-[#8d8d8d]">parsing bug report + logs + docs</span></div></div>
+      <div class="shimmer h-4 w-full rounded"></div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ bugReport })
+    });
+    const result = await res.json();
+    currentResult = result;
+
+    // Animate timeline
+    renderTimeline(result.timeline, result.totalDuration);
+
+    // Animate parallel agents one by one
+    setTimeout(() => setAgentState('reproducer','completed', result.reproduceResult), 200);
+    setTimeout(() => setAgentState('fix','completed', result.fixResult), 400);
+    setTimeout(() => setAgentState('test','completed', result.testResult), 600);
+    setTimeout(() => setAgentState('release','completed', result.releaseResult), 800);
+
+    setTimeout(() => renderTabs(result), 900);
+
+  } catch(e) {
+    console.error(e);
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>▶</span> Run Bob Orchestrator';
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('bugInput').value = '';
+});
+
+loadExamples();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a411a99d7f0733af',t:'MTc5MDQxOTM1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

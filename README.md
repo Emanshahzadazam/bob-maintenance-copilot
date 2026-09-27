@@ -1,4 +1,10 @@
 # Build with Purpose: IBM Bob 2.0 - Autonomous Maintenance Co-Pilot
+![IBM Bob 2.0](https://img.shields.io/badge/IBM%20Bob-2.0-0f62fe?style=for-the-badge)
+![Agent Mode](https://img.shields.io/badge/Agent%20Mode-Enabled-24a148)
+![Parallel Tasks](https://img.shields.io/badge/Parallel%20Tasks-4x%20Speedup-f1c21b)
+![MTTR](https://img.shields.io/badge/MTTR-98%25%20Faster-ff0000)
+
+**Live Demo:** https://3001-demo.e2b.app | **Challenge:** Build with Purpose using IBM Bob 2.0
 
 ## CHOSEN PROBLEM: The Application Maintenance Black Hole
 

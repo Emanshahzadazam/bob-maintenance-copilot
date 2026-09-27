@@ -1,0 +1,344 @@
+{
+  "reportVersion": "1.0.0",
+  "agent": "triageAgent",
+  "generatedAt": "2026-09-27T05:33:24.046Z",
+  "project": "TaskFlow API",
+  "documentsIngested": [
+    "logs/error.log",
+    "README.md",
+    "src/app.js",
+    "src/auth.js",
+    "src/index.js",
+    "src/tasks.js",
+    "src/utils.js",
+    "bug-report (cli-arg)"
+  ],
+  "totalIncidentsClassified": 3,
+  "incidents": [
+    {
+      "id": "INC-443",
+      "category": "jwt-security-bypass",
+      "title": "JWT decoded without signature verification + 24 h grace period",
+      "severity": "CRITICAL",
+      "affectedFile": "src/auth.js",
+      "affectedFunction": "authenticate()",
+      "affectedLine": 45,
+      "errorClass": "JsonWebTokenError / TokenExpiredError",
+      "cwe": "CWE-347 (Improper Verification of Cryptographic Signature)",
+      "fix": "Replace jwt.decode(token) with jwt.verify(token, SECRET) and remove GRACE_PERIOD_SECONDS",
+      "confidence": 1,
+      "sources": [
+        "src/auth.js",
+        "logs/error.log",
+        "README.md",
+        "bug-report"
+      ],
+      "stackTraces": [
+        {
+          "raw": "at /app/node_modules/jsonwebtoken/verify.js:89:21        ← this error is NEVER thrown",
+          "fn": null,
+          "file": "/app/node_modules/jsonwebtoken/verify.js:89:21        ← this error is NEVER thrown",
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at authenticate (/app/src/auth.js:44:19)                ← decode() returns payload silently",
+          "fn": null,
+          "file": null,
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)",
+          "fn": null,
+          "file": null,
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/route.js:144:13)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 144,
+          "col": 13
+        },
+        {
+          "raw": "at Route.dispatch (/app/node_modules/express/lib/router/route.js:114:3)",
+          "fn": "Route.dispatch",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 114,
+          "col": 3
+        },
+        {
+          "raw": "at /app/node_modules/express/lib/router/index.js:284:15",
+          "fn": null,
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 284,
+          "col": 15
+        },
+        {
+          "raw": "at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)",
+          "fn": "Function.process_params",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 346,
+          "col": 12
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/index.js:280:10)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 280,
+          "col": 10
+        },
+        {
+          "raw": "at /app/node_modules/jsonwebtoken/verify.js:89:21        ← this error is NEVER thrown (decode used)",
+          "fn": null,
+          "file": "/app/node_modules/jsonwebtoken/verify.js:89:21        ← this error is NEVER thrown (decode used",
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at authenticate (/app/src/auth.js:51:9)",
+          "fn": "authenticate",
+          "file": "/app/src/auth.js",
+          "line": 51,
+          "col": 9
+        }
+      ],
+      "logContextEntries": [
+        {
+          "request": "GET /tasks/9",
+          "response": "200  { id: 9, title: 'Security audit', owner: 'alice@example.com', ... }",
+          "context": [
+            "GRACE_PERIOD_SECONDS=86400; token with exp=1710460673 accepted at t=1710503873 (+43200s within grace)"
+          ],
+          "see": [
+            "See:      src/auth.js:44  const payload = jwt.decode(token);  ← must be jwt.verify(token, SECRET)",
+            "src/auth.js:17  const GRACE_PERIOD_SECONDS = 60 * 60 * 24;  ← must be 0"
+          ]
+        },
+        {
+          "request": "DELETE /tasks/3",
+          "response": "200  { deleted: true }",
+          "context": [
+            "token.exp = 1710421200  (2024-03-14T13:00:00Z, expired 13h ago)"
+          ],
+          "see": [
+            "See:      src/auth.js:52  if (payload.exp && payload.exp + GRACE_PERIOD_SECONDS < now)"
+          ]
+        }
+      ],
+      "evidenceSummary": [
+        "[src/auth.js] (conf=1.00) `jwt.decode(token)` found — signature is NOT verified",
+        "[src/auth.js] (conf=1.00) GRACE_PERIOD_SECONDS = 60 * 60 * 24; (evaluates to ? s) — should be 0",
+        "[logs/error.log] (conf=1.00) Log entry at 2024-03-15T09:17:53.821Z: JsonWebTokenError: invalid signature",
+        "[logs/error.log] (conf=1.00) Log entry at 2024-03-15T14:05:37.092Z: TokenExpiredError: jwt expired",
+        "[README.md] (conf=0.90) README section \"INC-442 — Pagination off-by-one + missing bounds check (`utils.js` line 19)\" documents this incident",
+        "[README.md] (conf=0.90) README section \"INC-443 — JWT decoded without signature verification + 24 h grace period (`auth.js`)\" documents this incident",
+        "[bug-report] (conf=0.85) Bug report references JWT / token / expiry / decode / INC-443"
+      ],
+      "readmeFix": "// auth.js — replace jwt.decode with jwt.verify\nconst payload = jwt.verify(token, SECRET);   // throws on bad sig or expiry\n// Remove GRACE_PERIOD_SECONDS entirely (set to 0 or delete the variable)"
+    },
+    {
+      "id": "INC-442",
+      "category": "pagination-data-leak",
+      "title": "Pagination off-by-one + missing bounds check",
+      "severity": "HIGH",
+      "affectedFile": "src/utils.js",
+      "affectedFunction": "paginate()",
+      "affectedLine": 19,
+      "errorClass": "TypeError",
+      "cwe": "CWE-193 (Off-by-one Error)",
+      "fix": "Change `const start = page * limit` to `const start = (page - 1) * limit` and clamp end with Math.min(start + limit, data.length)",
+      "confidence": 1,
+      "sources": [
+        "src/utils.js",
+        "logs/error.log",
+        "README.md",
+        "bug-report"
+      ],
+      "stackTraces": [
+        {
+          "raw": "at router.get (/app/src/tasks.js:33:38)",
+          "fn": "router.get",
+          "file": "/app/src/tasks.js",
+          "line": 33,
+          "col": 38
+        },
+        {
+          "raw": "at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)",
+          "fn": null,
+          "file": null,
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/route.js:144:13)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 144,
+          "col": 13
+        },
+        {
+          "raw": "at Route.dispatch (/app/node_modules/express/lib/router/route.js:114:3)",
+          "fn": "Route.dispatch",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 114,
+          "col": 3
+        },
+        {
+          "raw": "at /app/node_modules/express/lib/router/index.js:284:15",
+          "fn": null,
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 284,
+          "col": 15
+        },
+        {
+          "raw": "at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)",
+          "fn": "Function.process_params",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 346,
+          "col": 12
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/index.js:280:10)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 280,
+          "col": 10
+        },
+        {
+          "raw": "at /app/src/auth.js:44:3",
+          "fn": null,
+          "file": "/app/src/auth.js",
+          "line": 44,
+          "col": 3
+        }
+      ],
+      "logContextEntries": [
+        {
+          "request": "GET /tasks?page=4&limit=3",
+          "response": "200 { items: [ { id: 10, ... }, undefined, undefined ], total: 10, page: 4, limit: 3 }",
+          "context": [
+            "paginate called with page=4, limit=3 → start = 4*3 = 12, expected start = (4-1)*3 = 9"
+          ],
+          "see": [
+            "See:      src/utils.js:19  const start = page * limit;   ← off-by-one"
+          ]
+        }
+      ],
+      "evidenceSummary": [
+        "[src/utils.js] (conf=1.00) Line matches `const start = page * limit` — missing `(page - 1)` factor",
+        "[src/utils.js] (conf=0.95) Missing Math.min bounds clamp — end may exceed data.length",
+        "[logs/error.log] (conf=1.00) Log entry at 2024-03-15T08:42:11.304Z: TypeError: Cannot read properties of undefined (reading 'id')",
+        "[README.md] (conf=0.90) README section \"Create a task\" documents this incident",
+        "[README.md] (conf=0.90) README section \"INC-442 — Pagination off-by-one + missing bounds check (`utils.js` line 19)\" documents this incident",
+        "[bug-report] (conf=0.85) Bug report text references pagination / off-by-one / INC-442"
+      ],
+      "readmeFix": "// utils.js line 19\nconst start = (page - 1) * limit;                     // was: page * limit\nconst end   = Math.min(start + limit, data.length);   // add bounds clamp"
+    },
+    {
+      "id": "INC-444",
+      "category": "timezone-date-mismatch",
+      "title": "parseDueDate ignores timezone param — PST off-by-one day",
+      "severity": "MEDIUM",
+      "affectedFile": "src/tasks.js",
+      "affectedFunction": "parseDueDate()",
+      "affectedLine": 74,
+      "errorClass": "RangeError (semantic)",
+      "cwe": "CWE-682 (Incorrect Calculation)",
+      "fix": "Use date-fns-tz fromZonedTime(`${dateString}T00:00:00`, userTimezone) to convert to UTC before persisting",
+      "confidence": 1,
+      "sources": [
+        "src/tasks.js",
+        "logs/error.log",
+        "README.md",
+        "bug-report"
+      ],
+      "stackTraces": [
+        {
+          "raw": "at parseDueDate (/app/src/tasks.js:81:15)",
+          "fn": "parseDueDate",
+          "file": "/app/src/tasks.js",
+          "line": 81,
+          "col": 15
+        },
+        {
+          "raw": "at router.post (/app/src/tasks.js:48:26)",
+          "fn": "router.post",
+          "file": "/app/src/tasks.js",
+          "line": 48,
+          "col": 26
+        },
+        {
+          "raw": "at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)",
+          "fn": null,
+          "file": null,
+          "line": null,
+          "col": null
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/route.js:144:13)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 144,
+          "col": 13
+        },
+        {
+          "raw": "at Route.dispatch (/app/node_modules/express/lib/router/route.js:114:3)",
+          "fn": "Route.dispatch",
+          "file": "/app/node_modules/express/lib/router/route.js",
+          "line": 114,
+          "col": 3
+        },
+        {
+          "raw": "at /app/node_modules/express/lib/router/index.js:284:15",
+          "fn": null,
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 284,
+          "col": 15
+        },
+        {
+          "raw": "at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)",
+          "fn": "Function.process_params",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 346,
+          "col": 12
+        },
+        {
+          "raw": "at next (/app/node_modules/express/lib/router/index.js:280:10)",
+          "fn": "next",
+          "file": "/app/node_modules/express/lib/router/index.js",
+          "line": 280,
+          "col": 10
+        }
+      ],
+      "logContextEntries": [
+        {
+          "request": "POST /tasks",
+          "response": "201 { id: 891, title: 'Q1 Planning', dueDate: '2024-03-14', ... }",
+          "context": [
+            "userTimezone=\"America/Los_Angeles\" was passed but parseDueDate() never reads it"
+          ],
+          "see": [
+            "See:      src/tasks.js:81  const date = new Date(dateString);  ← ignores userTimezone param",
+            "src/tasks.js:82  return formatDate(date);            ← toISOString() strips tz context"
+          ]
+        }
+      ],
+      "evidenceSummary": [
+        "[src/tasks.js] (conf=0.95) `new Date(dateString)` parses as UTC midnight — ignores caller timezone",
+        "[logs/error.log] (conf=1.00) Log entry at 2024-03-15T16:31:22.548Z: RangeError: Invalid date stored — expected 2024-03-15, got 2024-03-14",
+        "[README.md] (conf=0.90) README section \"INC-443 — JWT decoded without signature verification + 24 h grace period (`auth.js`)\" documents this incident",
+        "[README.md] (conf=0.90) README section \"INC-444 — `parseDueDate` ignores timezone parameter, PST off-by-one day (`tasks.js`)\" documents this incident",
+        "[bug-report] (conf=0.85) Bug report references timezone / PST / dueDate / parseDueDate / INC-444"
+      ],
+      "readmeFix": "const { fromZonedTime } = require('date-fns-tz');\n\nfunction parseDueDate(dateString, userTimezone = 'UTC') {\n  const utc = fromZonedTime(`${dateString}T00:00:00`, userTimezone);\n  return formatDate(utc);\n}"
+    }
+  ],
+  "summary": [
+    "INC-443 [CRITICAL] JWT decoded without signature verification + 24 h grace period — src/auth.js:45 (conf=1.00)",
+    "INC-442 [HIGH] Pagination off-by-one + missing bounds check — src/utils.js:19 (conf=1.00)",
+    "INC-444 [MEDIUM] parseDueDate ignores timezone param — PST off-by-one day — src/tasks.js:74 (conf=1.00)"
+  ]
+}
